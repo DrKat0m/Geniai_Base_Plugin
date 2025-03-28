@@ -1,5 +1,3 @@
-Sure! Here's the complete `README.md` content, ready to copy-paste directly into your `Geniai_Base_Plugin` repo:
-
 ```markdown
 # Geniai Base Plugin (Backend)
 
@@ -98,5 +96,3 @@ git checkout -b your-branch-name
 
 ---
 ```
-
-Let me know if you want me to add a badges section or auto-versioning instructions!
