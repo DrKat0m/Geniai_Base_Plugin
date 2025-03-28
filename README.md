@@ -1,23 +1,102 @@
-## ChatGPT Assistant
+Sure! Here's the complete `README.md` content, ready to copy-paste directly into your `Geniai_Base_Plugin` repo:
 
-O plugin "ChatGPT Assistant" foi desenvolvido como uma extensão destinada a aprimorar a experiência educacional no ambiente online do Moodle. Este assistente interativo tem como propósito oferecer suporte aos alunos, esclarecendo dúvidas tanto relacionadas ao funcionamento do Moodle quanto ao conteúdo do curso, promovendo, assim, uma comunicação eficaz e facilitando a aprendizagem autônoma.
+```markdown
+# Geniai Base Plugin (Backend)
 
-Ao facilitar a interação entre alunos e a plataforma, o plugin promove uma comunicação eficaz, tornando mais acessível o esclarecimento de dúvidas. Além disso, estimula a aprendizagem autônoma, capacitando os alunos a buscar respostas de maneira independente.
+This repository contains the **core backend logic** for the AAC Moodle Chatbot.  
+All backend processing and integrations should be done and maintained here.
 
-Para otimizar a utilização do "ChatGPT Assistant," é necessário possuir a Chave da API da OpenAI. Vale ressaltar que, para usufruir da versão GPT-4, é requerido um pagamento inicial no valor de $1.
+> ⚠️ **Do not mix up frontend/activity code with this repository.**  
+> All chatbot activity UI code should go in the [moodle-chatbot](https://github.com/DrKat0m/moodle-chatbot) repo.
 
-### Como obter a API de acesso
+---
 
-Para criar uma API, acesse [API keys](https://platform.openai.com/api-keys).
+## 🔧 Installing the Plugin
 
-### Como posso acessar o GPT-4?
+1. Download the ZIP of the latest version from this repository.
+2. In Moodle, go to:  
+   `Site Administration → Plugins → Install Plugins → Install plugin from the ZIP file`
+3. Upload and install the plugin.
 
-Depois de efetuar um pagamento bem-sucedido de US$ 5 ou mais (nível de uso 1), você poderá acessar o [GPT-4 e o GPT-4 Turbo](https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo) por meio da API OpenAI. [Saiba mais sobre como adicionar crédito à sua conta OpenAI](https://help.openai.com/en/articles/8264644-what-is-prepaid-billing).
+This plugin should install into the `local/geniai` directory inside your Moodle codebase.
 
-### Prints
+---
 
-![captura-01](https://github.com/user-attachments/assets/2937d9dd-aec3-45c9-83c5-19693260a964)
+## 🔄 Keeping Frontend (Activity Plugin) in Sync
 
-![captura-02](https://github.com/user-attachments/assets/518e49b4-4f15-4e2b-823d-006c8f139bf3)
+- After updating backend logic here, ensure that relevant API changes or logic adjustments are reflected in the chatbot activity plugin as well.
+- **Do not push UI/activity code into this repo.**
 
-![captura-03](https://github.com/user-attachments/assets/b831a716-ee8c-464f-a6c7-4d7304fc5c03)
+---
+
+## 🛠️ Development Workflow
+
+If you're planning to contribute, here's a recommended Git workflow:
+
+### 1. Clone the repository via SSH
+
+```bash
+git clone git@github.com:DrKat0m/Geniai_Base_Plugin.git
+cd Geniai_Base_Plugin
+```
+
+### 2. Create a new branch
+
+```bash
+git checkout -b your-branch-name
+```
+
+### 3. Make your changes  
+Then stage, commit, and push:
+
+```bash
+git add .
+git commit -m "Your descriptive commit message"
+git push -u origin your-branch-name
+```
+
+### 4. Open a pull request  
+Do this on GitHub so your changes can be reviewed.
+
+---
+
+## 🧪 Debugging with Xdebug
+
+If you’re setting up Xdebug with PHP, follow the detailed step-by-step guide by Kartavya in the Discord Resource Channel:  
+🔗 [Discord Guide](https://discord.com/channels/1328761463774511164/1328771210087235595/1346614587008618588)
+
+---
+
+## 🧹 Clean Cloning Guide (For Fresh Setups)
+
+1. Make sure Git is installed:  
+   👉 [https://git-scm.com/downloads](https://git-scm.com/downloads)
+
+2. Navigate to where you want to install the plugin:
+```bash
+cd D:\xampp\htdocs\moodle\local
+```
+
+3. Clone the repository:
+```bash
+git clone git@github.com:DrKat0m/Geniai_Base_Plugin.git
+```
+
+4. Create and switch to a new branch for your work:
+```bash
+cd Geniai_Base_Plugin
+git checkout -b your-branch-name
+```
+
+---
+
+## ✅ Important Notes
+
+- Always commit backend changes to this repository.
+- Keep the [moodle-chatbot](https://github.com/DrKat0m/moodle-chatbot) repo updated with any dependent frontend changes.
+- Avoid pushing any chatbot activity code (block/activity module) to this repo to prevent merge conflicts and code pollution.
+
+---
+```
+
+Let me know if you want me to add a badges section or auto-versioning instructions!
