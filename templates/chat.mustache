@@ -1,0 +1,96 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_geniai/chat
+
+    Example context (json):
+    {
+        "geniainame": "Name",
+        "manage_capability": true,
+        "message_01": "string",
+        "message_02": "string"
+    }
+}}
+
+<div id="geniai-chat" class="mode-{{{mode}}}" style="display:none">
+
+    <input type="hidden" id="local_geniai_message_01" value="{{message_01}}">
+    <input type="hidden" id="local_geniai_message_02" value="{{message_02}}">
+
+    <div class="geniai-popup">
+        <div id="geniai-scrollarea">
+            <div class="geniai-header">
+                <div class="geniai-info">
+                    {{#pix}}chat/open-tutor,local_geniai{{/pix}}
+                    <div class="geniai-infoname">
+                        <span class="geniai-name">{{{geniainame}}}</span>
+                        <span class="geniai-status">{{#str}}online,local_geniai{{/str}}</span>
+                    </div>
+                </div>
+                <div class="right-icons">
+                    {{#manage_capability}}
+                        <a id="geniai-icon-report"
+                           target="_blank"
+                           title="{{#str}}report_title,local_geniai{{/str}}"
+                           href="{{{config.wwwroot}}}/local/geniai/report.php">
+                            {{#pix}}icons/report,local_geniai{{/pix}}
+                        </a>
+                    {{/manage_capability}}
+                    <a id="geniai-clear-history"
+                       title="{{#str}}clear_history_title,local_geniai{{/str}}"
+                       href="#">
+                        {{#pix}}icons/clear,local_geniai{{/pix}}
+                    </a>
+                    <a id="geniai-icon-close"
+                       title="{{#str}}close_title,local_geniai{{/str}}"
+                       href="#">
+                        {{#pix}}icons/close,local_geniai{{/pix}}
+                    </a>
+                </div>
+            </div>
+            <div id="geniai-area-mensagens"></div>
+        </div>
+        <div id="geniai-sendarea">
+            <textarea id="geniai-textarea" contenteditable="true"
+                      placeholder="{{#str}}write_message,local_geniai{{/str}}"></textarea>
+
+            <div id="geniai-icon-stop"
+                 style="display: none">
+                {{#pix}}icons/stop,local_geniai{{/pix}}
+            </div>
+
+            <div id="geniai-icon-mic"
+                 title="{{#str}}send_message,local_geniai{{/str}}">
+                {{#pix}}icons/mic,local_geniai{{/pix}}
+            </div>
+            <div id="geniai-icon-send" title="{{#str}}send_message,local_geniai{{/str}}">
+                {{#pix}}icons/send,local_geniai{{/pix}}
+            </div>
+        </div>
+    </div>
+
+    <div id="geniai-chat-btn">
+        <span id="geniai-count-icon" data-count="0">0</span>
+        <div class="balloon">{{{talk_geniai}}}</div>
+        <span class="geniai-icon geniai-open-icon">
+            {{#pix}}chat/open-tutor, local_geniai{{/pix}}
+        </span>
+        <span class="geniai-icon geniai-close-icon">
+            {{#pix}}chat/close,local_geniai{{/pix}}
+        </span>
+    </div>
+</div>

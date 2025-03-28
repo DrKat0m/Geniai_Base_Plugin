@@ -1,0 +1,83 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_geniai/h5p-create
+
+    Example context (json):
+    {
+      "h5p": {
+        "contextid": 42,
+        "type": "content",
+        "title": "Example H5P Title"
+      },
+      "user": {
+        "lang": "en",
+        "fullname": "John Doe"
+      },
+      "baseColor": "#FF5733",
+      "types": {
+        "h5ps": [
+          {
+            "id": "InteractiveVideo",
+            "title": "Interactive Video",
+            "desc": "Create videos with interactive elements",
+            "pix": true
+          },
+          {
+            "id": "CoursePresentation",
+            "title": "Course Presentation",
+            "desc": "Create interactive presentations",
+            "pix": true
+          }
+        ]
+      },
+      "h5pjs": "$('#test').html(h5ps);\n$ui.sortable(ModalFactory);"
+    }
+}}
+
+<form method="post"
+      class="validate form-h5p-next-step d-none"
+      enctype="multipart/form-data"
+      action="edit.php">
+    <div class="displayErroForm alert alert-danger" style="display: none;"></div>
+    <input name="POST" type="hidden" value="true">
+    <input type="hidden" name="sesskey" id="sesskey" value="{{config.sesskey}}">
+    <input type="hidden" name="contextid" id="contextid" value="{{h5p.contextid}}">
+    <input type="hidden" name="type" id="type" value="{{h5p.type}}">
+    <input type="hidden" name="user_lang" id="user_lang" value="{{user_lang}}">
+    <input type="hidden" name="userfullname" id="userfullname" value="{{user.fullname}}">
+    <input type="hidden" id="h5p-title" value="{{h5p.title}}">
+    <input type="hidden" id="displaySummary" name="config[displaySummary]" value="1">
+    <input type="hidden" id="baseColor" name="config[baseColor]" value="{{{baseColor}}}">
+
+    <div id="area-editor"></div>
+
+</form>
+{{#js}}
+    require(["jquery", "core/modal_factory", "jqueryui"], function($, ModalFactory, $ui) {
+    var h5ps = {
+        {{#types.h5ps}}
+            "H5P.{{{id}}}": {
+                "title": "{{{title}}}",
+                "desc": "{{{desc}}}",
+                "pix": `{{#pix}}h5p/H5P.{{id}},local_geniai{{/pix}}`,
+            },
+        {{/types.h5ps}}
+    };
+    {{{h5pjs}}}
+});
+{{/js}}
