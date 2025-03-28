@@ -5,7 +5,7 @@ This repository contains the **core backend logic** for the AAC Moodle Chatbot.
 All backend processing and integrations should be done and maintained here.
 
 > ⚠️ **Do not mix up frontend/activity code with this repository.**  
-> All chatbot activity UI code should go in the [moodle-chatbot](https://github.com/DrKat0m/moodle-chatbot) repo.
+> All chatbot activity UI code should go in the [moodle-chatbot](https://github.com/jpo5417/moodle-chatbot) repo.
 
 ---
 
@@ -91,7 +91,7 @@ git checkout -b your-branch-name
 ## ✅ Important Notes
 
 - Always commit backend changes to this repository.
-- Keep the [moodle-chatbot](https://github.com/DrKat0m/moodle-chatbot) repo updated with any dependent frontend changes.
+- Keep the [moodle-chatbot](https://github.com/jpo5417/moodle-chatbot) repo updated with any dependent frontend changes.
 - Avoid pushing any chatbot activity code (block/activity module) to this repo to prevent merge conflicts and code pollution.
 
 ---
