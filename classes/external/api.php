@@ -77,7 +77,7 @@ class api {
      * @param string $message
      * @param int $courseid
      * @param null $audio
-     *
+     * @param string $lang
      * @return array
      *
      * @throws \coding_exception
