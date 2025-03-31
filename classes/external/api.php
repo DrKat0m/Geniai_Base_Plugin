@@ -84,153 +84,19 @@ class api {
      * @throws \dml_exception
      */
 
-    /*
     public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
         global $CFG, $DB, $USER, $SITE;
 
-        if (isset($_SESSION["messages-v3-{$courseid}"][0])) {
-            $messages = $_SESSION["messages-v3-{$courseid}"];
-        } else {
-
-            if (get_config("local_geniai", "mode") == "assistant") {
-                $replace = [
-                    "wwwroot" => $CFG->wwwroot,
-                    "fullname" => $SITE->fullname,
-                ];
-                $messages = [
-                    [
-                        "role" => "system",
-                        "content" => get_config("local_geniai", "prompt") . "\nAnd you only format in MARKDOWN.",
-                    ], [
-                        "role" => "system",
-                        "content" => get_string("url_moodle", "local_geniai", $replace),
-                    ],
-                ];
-            } else {
-                $geniainame = get_config("local_geniai", "geniainame");
-                $prompt =
-                    "You are a multilingual conversation tutor and your name is {$geniainame} " .
-                    "and you will act as if you were in a conversation session.";
-                $messages = [
-                    [
-                        "role" => "system",
-                        "content" => $prompt,
-                    ], [
-                        "role" => "system",
-                        "content" => "Respond only in the language \"{$lang}\" and only in MARKDOWN format.",
-                    ],
-                ];
-            }
-            if ($courseid) {
-                if ($course = $DB->get_record("course", ["id" => $courseid])) {
-                    $messages[] = [
-                        "role" => "system",
-                        "content" => get_string("course_user", "local_geniai",
-                            ["course" => $course->fullname, "userfullname" => fullname($USER)]),
-                    ];
-                }
-            } else {
-                $messages[] = [
-                    "role" => "system",
-                    "content" => get_string("course_home", "local_geniai", ["userfullname" => fullname($USER)]),
-                ];
-            }
-        }
-
-        $returntranscription = false;
-        if ($audio) {
-            $transcription = self::transcriptions($audio, $lang);
-            $returntranscription = $message = $transcription["text"];
-
-            $audiolink = "<audio controls autoplay " .
-                "src='{$CFG->wwwroot}/local/geniai/load-audio-temp.php?filename={$transcription["filename"]}'>" .
-                "</audio><div class='transcription'>{$message}</div>";
-
-            $messages[] = [
-                "role" => "user",
-                "content" => $audiolink,
-            ];
-        } else {
-            $messages[] = [
-                "role" => "user",
-                "content" => strip_tags(trim($message)),
-            ];
-        }
-
-        if (count($messages) > 10) {
-            unset($messages[4]);
-            unset($messages[3]);
-            $messages = array_values($messages);
-        }
-
-        $gpt = self::chat_completions($messages);
-        if (isset($gpt["error"])) {
-            $parsemarkdown = new parse_markdown();
-            $content = $parsemarkdown->markdown_text($gpt["error"]["message"]);
-
-            return [
-                "result" => false,
-                "format" => "text",
-                "content" => $content,
-                "transcription" => $returntranscription,
-            ];
-        }
-
-        if (isset($gpt["choices"][0]["message"]["content"])) {
-            $content = $gpt["choices"][0]["message"]["content"];
-
-            if ($audio) {
-                $parsemarkdown = new parse_markdown();
-                $content = $parsemarkdown->markdown_text($content);
-                $contentstrip = strip_tags($content);
-                $audiosrc = self::speech($contentstrip);
-                $content = "<audio controls autoplay src='{$audiosrc}'></audio><div class='transcription'>{$content}</div>";
-
-                $messages[] = [
-                    "role" => "system",
-                    "content" => $content,
-                ];
-            } else {
-                $messages[] = [
-                    "role" => "system",
-                    "content" => $content,
-                ];
-
-                $parsemarkdown = new parse_markdown();
-                $content = $parsemarkdown->markdown_text($content);
-            }
-
-            $_SESSION["messages-v3-{$courseid}"] = $messages;
-
-            $format = "html";
-            return [
-                "result" => true,
-                "format" => $format,
-                "content" => $content,
-                "transcription" => $returntranscription,
-            ];
-        }
-
-        return [
-            "result" => false,
-            "format" => "text",
-            "content" => "Error...",
-        ];
-    }*/
-
-    public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
-        global $CFG, $DB, $USER, $SITE;
-
-        $scenario = optional_param('scenario', '', PARAM_TEXT); // Get selected scenario from frontend
+        $scenario = optional_param('scenario', '', PARAM_TEXT); // Get selected scenario from frontend.
         if (empty($scenario)) {
             $scenarios = ['anna', 'brianna', 'cathy'];
-            $scenario = $scenarios[array_rand($scenarios)]; // Randomly select one
+            $scenario = $scenarios[array_rand($scenarios)]; // Randomly select one.
         }
 
         if (isset($_SESSION["messages-v3-{$courseid}"][0]) || $lastscenario !== $scenario) {
             $messages = [];
 
-            // Set custom parent persona prompts based on scenario
+            // Set custom parent persona prompts based on scenario.
             switch ($scenario) {
                 case "anna":
                     $persona = "You are Anna Charles, the single mother of a 4-year-old girl named Sarah with autism.
