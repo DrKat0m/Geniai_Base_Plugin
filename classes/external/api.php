@@ -83,6 +83,8 @@ class api {
      * @throws \coding_exception
      * @throws \dml_exception
      */
+
+    /*
     public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
         global $CFG, $DB, $USER, $SITE;
 
@@ -214,6 +216,86 @@ class api {
             "format" => "text",
             "content" => "Error...",
         ];
+    }*/
+
+    public static function chat_api($message, $courseid, $audio = null, $lang = "en", $scenario) {
+        global $CFG, $DB, $USER, $SITE;
+
+        $scenario = optional_param('scenario', '', PARAM_TEXT); // Get selected scenario from frontend
+        if (empty($scenario)) {
+            $scenarios = ['anna', 'brianna', 'cathy'];
+            $scenario = $scenarios[array_rand($scenarios)]; // Randomly select one
+        }
+
+        if (isset($_SESSION["messages-v3-{$courseid}"][0]) || $lastscenario !== $scenario) {
+            $messages = [];
+
+            // Set custom parent persona prompts based on scenario
+            switch ($scenario) {
+                case "anna":
+                    $persona = "You are Anna Charles, the single mother of a 4-year-old girl named Sarah with autism. You're overwhelmed and frustrated with the lack of communication progress. Respond using:
+                    1. 'I just wanted to meet you and see if Sarah can get something else to help her talk.'
+                    2. 'She spends a lot of time with my parents. They don’t know how to work the iPad. She gets frustrated and then I get frustrated.'
+                    3. 'I just don’t know how to help her say what she wants to say. I feel like there has to be a better way.'
+                    4. 'I’m doing all I can.'
+                    Your tone should reflect emotional fatigue, worry, and guilt.";
+                    break;
+
+                case "brianna":
+                    $persona = "You are Brianna Mitchell, a married mother of Wesley (8) who has severe apraxia. You’re concerned about his social isolation. Use:
+                    1. 'I’m worried that Wesley has no friends and he is having trouble making friends. I don’t know how to help him.'
+                    2. 'He tries to communicate with his words but no one can understand him. He doesn’t like carrying his device around.'
+                    3. 'I’m afraid that if he doesn’t make friends now, it will just get worse as he gets older.'
+                    4. 'Will he ever be able to use his speech?'
+                    Your tone should be concerned, serious, and anxious.";
+                    break;
+
+                case "cathy":
+                    $persona = "You are Cathy Fratner, a newly married mother of Charlie (2) with Down Syndrome. He is not yet talking. Use:
+                    1. 'I’m worried that Charlie isn’t talking yet.'
+                    2. 'My husband thinks that if we keep using the iPad, Charlie won’t even bother learning to talk.'
+                    3. 'I just don’t know how to help when he wants something and can’t tell me what it is.'
+                    4. 'Some days he likes using the iPad, and other days not so much.'
+                    Your tone should show confusion, worry, and parental doubt.";
+                    break;
+
+                default:
+                    $persona = get_config("local_geniai", "prompt");
+            }
+
+            $messages[] = [
+                "role" => "system",
+                "content" => $persona . "\nOnly respond as the parent. Speak naturally and stay in character."
+            ];
+        }
+
+        $messages[] = ["role" => "user", "content" => strip_tags(trim($message))];
+
+        if (count($messages) > 10) {
+            unset($messages[4]);
+            unset($messages[3]);
+            $messages = array_values($messages);
+        }
+
+        $gpt = self::chat_completions($messages);
+        if (isset($gpt["error"])) {
+            $parsemarkdown = new parse_markdown();
+            $content = $parsemarkdown->markdown_text($gpt["error"]["message"]);
+            return ["result" => false, "format" => "text", "content" => $content];
+        }
+
+        if (isset($gpt["choices"][0]["message"]["content"])) {
+            $content = $gpt["choices"][0]["message"]["content"];
+            $parsemarkdown = new parse_markdown();
+            $content = $parsemarkdown->markdown_text($content);
+
+            $messages[] = ["role" => "system", "content" => $content];
+            $_SESSION["messages-v3-{$courseid}"] = $messages;
+
+            return ["result" => true, "format" => "html", "content" => $content];
+        }
+
+        return ["result" => false, "format" => "text", "content" => "Error..."];
     }
 
     /**

@@ -44,6 +44,7 @@ class chat_4 extends external_api {
             "courseid" => new external_value(PARAM_TEXT, "The Course ID"),
             "audio" => new external_value(PARAM_RAW, "The message value", VALUE_DEFAULT, null, NULL_ALLOWED),
             "lang" => new external_value(PARAM_RAW, "The language value", VALUE_DEFAULT, null, NULL_ALLOWED),
+            'scenario' => new external_value(PARAM_TEXT, 'Parent scenario identifier', VALUE_DEFAULT, ''),
         ]);
     }
 
@@ -58,6 +59,7 @@ class chat_4 extends external_api {
             "format" => new external_value(PARAM_TEXT, "Formato da resposta", VALUE_REQUIRED),
             "content" => new external_value(PARAM_RAW, "The content result", VALUE_REQUIRED),
             "transcription" => new external_value(PARAM_RAW, "The content transcription", VALUE_OPTIONAL),
+            'scenario' => new external_value(PARAM_TEXT, 'Parent scenario identifier', VALUE_DEFAULT, ''),
         ]);
     }
 
@@ -74,7 +76,7 @@ class chat_4 extends external_api {
      * @throws \coding_exception
      * @throws \dml_exception
      */
-    public static function api($message, $courseid, $audio = null, $lang=null) {
-        return api::chat_api($message, $courseid, $audio, $lang );
+    public static function api($message, $courseid, $audio = null, $lang=null, $scenario = "") {
+        return api::chat_api($message, $courseid, $audio, $lang, $scenario);
     }
 }

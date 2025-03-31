@@ -40,7 +40,7 @@ $string['frequency_penalty'] = 'Frequency Penalty';
 $string['frequency_penalty_desc'] = 'This parameter is used to discourage the model from repeating the same words or phrases too often in the generated text. It is a value added to the log probability of a token each time it occurs in the generated text. A higher frequency penalty will make the model more conservative about using repeated tokens.';
 $string['geniai:manage'] = 'Manage GeniAI';
 $string['geniai:view'] = 'View GeniAI';
-$string['geniainame'] = 'Assistant Name';
+$string['geniainame'] = 'AURA - ACC Understanding & Reflective Assistant';
 $string['geniainame_desc'] = 'Define the name of your assistant';
 $string['h5p-accordion-desc'] = 'Create a Glossary allowing students to quickly access answers without being overwhelmed by excessive text.';
 $string['h5p-accordion-title'] = 'Glossary';
@@ -81,8 +81,14 @@ $string['max_tokens'] = 'Maximum words in response';
 $string['max_tokens_desc'] = 'Maximum number of words that can be generated in each request.';
 $string['message_01'] = 'Hello, {$a}! 🌟';
 $string['message_02_course'] = 'Welcome to the course {$a->coursename} on Moodle {$a->moodlename}!
+
 I am {$a->geniainame}, and I am here to make your learning journey as amazing as possible.
-How can I assist you today? 🌟📚';
+
+This chatbot is designed to help you practice and demonstrate your ability to effectively communicate with parents of children who use AAC (Augmentative and Alternative Communication) tools.
+
+In this activity, you will engage in a simulated conversation as a pre-service teacher, aiming to use the LAFF don’t CRY strategy during your responses. The goal is to complete 8 back-and-forth exchanges with the "parent." After the conversation ends, your responses will be analyzed, and a score will be automatically logged into your gradebook based on how well you applied the LAFF strategy.
+🔄 If you would like to restart the assignment, simply click **Clear Chat** to begin again.';
+
 $string['message_02_geniai'] = 'Hello! I am {$a}, here to help you. If you prefer, you can send me an audio message, and I will respond in audio as well. If you prefer to write, I will reply in text. Whichever you prefer!';
 $string['message_02_home'] = 'I am {$a}, and I am here to make your learning journey as amazing as possible.
 How can I assist you today? 🌟📚';
@@ -95,11 +101,11 @@ $string['model'] = 'The API Model';
 $string['model_desc'] = 'The API model to be executed in OpenAI. Available values are on the <a href="https://platform.openai.com/docs/models/overview" target="_blank">OpenAI website</a><br>
 * <strong>gpt-4</strong>: Much more powerful, slightly more expensive, takes a bit longer to respond, and requires a <a href="https://help.openai.com/en/articles/7102672-how-can-i-access-gpt-4" target="_blank">prepayment of $1</a> to test.<br>
 * <strong>gpt-4o-mini</strong>:  Less powerful than gpt-4, but faster and cheaper. No prepayment is required.';
-$string['modulename'] = 'GeniAI';
+$string['modulename'] = 'AURA - ACC Understanding & Reflective Assistant';
 $string['modules'] = 'Modules to hide from {$a}';
 $string['modules_desc'] = 'This list contains the modules that should not be made available to students, ensuring they are not used in exercises.';
 $string['online'] = 'Online';
-$string['pluginname'] = 'GeniAI';
+$string['pluginname'] = 'AURA - ACC Understanding & Reflective Assistant';
 $string['presence_penalty'] = 'Presence Penalty';
 $string['presence_penalty_desc'] = 'This parameter is used to encourage the model to include a variety of tokens in the generated text. It is a value subtracted from the log probability of a token each time it is generated. A higher presence penalty value will make the model more likely to generate tokens not yet included in the generated text.';
 $string['privacy:metadata'] = 'The GeniAI plugin stores conversation history and transmits only the full name, course name, and URL to OpenAI, without sharing any other personal data.';
