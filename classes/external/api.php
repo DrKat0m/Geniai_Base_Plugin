@@ -218,7 +218,7 @@ class api {
         ];
     }*/
 
-    public static function chat_api($message, $courseid, $audio = null, $lang = "en", $scenario) {
+    public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
         global $CFG, $DB, $USER, $SITE;
 
         $scenario = optional_param('scenario', '', PARAM_TEXT); // Get selected scenario from frontend
