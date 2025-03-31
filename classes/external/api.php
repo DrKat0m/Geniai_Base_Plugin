@@ -83,7 +83,6 @@ class api {
      * @throws \coding_exception
      * @throws \dml_exception
      */
-
     public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
         global $CFG, $DB, $USER, $SITE;
 
