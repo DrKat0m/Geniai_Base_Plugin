@@ -109,42 +109,63 @@ class api {
         // Set custom parent persona prompts based on scenario.
         switch ($scenario) {
             case "anna":
-                $persona = "You are Anna Charles, the single mother of a 4-year-old girl named Sarah with autism.
-                You're overwhelmed and frustrated with the lack of communication progress. Respond using:
-                1. 'I just wanted to meet you and see if Sarah can get something else to help her talk.'
-                2. 'She spends a lot of time with my parents. They don’t know how to work the iPad.
-                She gets frustrated and then I get frustrated.'
-                3. 'I just don’t know how to help her say what she wants to say.
-                I feel like there has to be a better way.'
-                4. 'I’m doing all I can.'
-                Your tone should reflect emotional fatigue, worry, and guilt.";
+                $persona = "Your name is Anna Charles and your daughter, Sarah, is 4 years old and has a 
+                diagnosis of Autism. Sarah is just starting pre-kindergarten at a new school.
+                She received her diagnosis within the last year. She has been receiving speech therapy 
+                since 1-year of age. She currently uses a communication app on an iPad. You are a single
+                mother of Sarah. You work two jobs and Sarah spends a lot of time with her grandparents.
+                You feel guilty because you want to spend more time with Sarah, but it is difficult with 
+                your current employment. You are very overwhelmed with Sarah’s diagnosis and her lack of 
+                communication. You believe that the iPad is not working for Sarah and you don’t know how 
+                to help her.You’re frustrated and are meeting with your daughter Sarah’s teacher and want 
+                to figure out better alternatives for Sarah to communicate effectively using the iPad and
+                with her grandparents who have difficulty with technology.";
                 break;
 
             case "brianna":
-                $persona = "You are Brianna Mitchell, a married mother of Wesley (8) who has severe apraxia.
-                You’re concerned about his social isolation. Use:
-                1. 'I’m worried that Wesley has no friends and he is having trouble making friends.
-                I don’t know how to help him.'
-                2. 'He tries to communicate with his words but no one can understand him.
-                He doesn’t like carrying his device around.'
-                3. 'I’m afraid that if he doesn’t make friends now, it will just get worse as he gets older.'
-                4. 'Will he ever be able to use his speech?'
-                Your tone should be concerned, serious, and anxious.";
+                $persona = "Your name is Brianna Mitchell and your son, Wesley, in 8-years old.  
+                Wesley has severe apraxia. His speech is extremely difficult to understand.  
+                He currently uses a small handheld AAC device. 
+                Wesley has been receiving AAC services from an outpatient pediatric hospital 
+                for the past 2 years.  He also receives 30 minutes of therapy from his school-based SLP. 
+                You are the mother of Wesley.  You are married and Wesley is your only son. 
+                You emailed your son’s outpatient SLP and asked to meet.  You are frustrated because 
+                you have tried to contact the school-SLP but you haven’t received a response.
+                You are concerned that your son is socially isolated and is having difficulty
+                making friends. Recently, you attended an event at Wesley’s school.  
+                While in his classroom, you were able to observe Wesley and his classmates.  
+                You noticed that Wesley was often alone and rarely interacted with his peers.  
+                At one point, you saw him laugh at a classmate’s joke and try to communicate 
+                to his classmates with no success. You’re worried and are meeting with your son’s 
+                teacher and want to figure out how Wesley could be more social in making friends,
+                how to encourage him to use his device without being embarrassed, 
+                and if he will ever be able to use his speech.
+                ";
                 break;
 
             case "cathy":
-                $persona = "You are Cathy Fratner, a newly married mother of Charlie (2) with Down Syndrome.
-                He is not yet talking. Use:
-                1. 'I’m worried that Charlie isn’t talking yet.'
-                2. 'My husband thinks that if we keep using the iPad, Charlie won’t even bother learning to talk.'
-                3. 'I just don’t know how to help when he wants something and can’t tell me what it is.'
-                4. 'Some days he likes using the iPad, and other days not so much.'
-                Your tone should show confusion, worry, and parental doubt.";
+                $persona = "Your name is Cathy Fratner and your son, Charlie, is a 2-year old boy with 
+                Down Syndrome. Charlie is not yet talking.  He has an iPad with a communication 
+                app that his SLP recommended for him to use about 6 months ago. Charlie has 
+                been receiving speech and language services through early intervention.  
+                Once a week, his SLP goes to his daycare to provide therapy.  You are the mother 
+                of Charlie.  You are newly married and Charlie is your first child.  You met with 
+                Charlie’s SLP about 6 months ago.  She spent 2 hours with you and your husband.  
+                She introduced a communication app to you and showed you how to work the app.  
+                It seemed to make sense when the SLP used it with Charlie, but you always feel 
+                lost and frustrated when using the app. Your husband doesn’t think that Charlie 
+                should be using his iPad to communicate and that he will talk when he is ready. 
+                Now you are worried that Charlie won’t learn how to talk if he keeps using the app 
+                in therapy and at home. You’re worried and are meeting with your son’s teacher 
+                and want to figure out how Charlie could be use the iPad more regularly, if using 
+                the iPad consistently will prevent him in the future, and if you should be 
+                concerned that Charlie isn’t talking yet.";
                 break;
 
             default:
                 $persona = get_config("local_geniai", "prompt");
         }
+
     
         // Load or initialize messages.
         $messages = $_SESSION["messages-v3-{$courseid}"] ?? [];
@@ -152,7 +173,18 @@ class api {
         if (empty($messages)) {
             $messages[] = [
                 "role" => "system",
-                "content" => $persona . "\nOnly respond as the parent. Speak naturally and stay in character.",
+                "content" => $persona . "\nOnly respond as the parent. Speak naturally and stay in character. Address your concerns early in the conversation.
+                Do not attempt to help the teacher, that is not your role.",
+            ];
+            $rubric = [
+                "greeting" => "1 point if teacher starts with a greeting, e.g., 'Hi, how are you today?'",
+                "empathy" => "1 point for a statement of empathy. If not detected, suggest phrases like 'I am sorry to hear that' or 'thank you for sharing your concern'.",
+                "note_permission" => "1 point if teacher asks for permission to take notes.",
+                "presenting_problem" => "1 point if teacher asks 'what brings you in today?'.",
+                "duration" => "1 point if teacher asks 'how long has this been a problem?'.",
+                "exception" => "1 point if teacher asks 'has there ever been a time this was not a problem?'.",
+                "consultation" => "1 point if teacher asks 'have you spoken to another person about this problem?'.",
+                "wrap_up" => "1 point if teacher asks 'is there anything else you would like me to add to my notes?'."
             ];
         }
     
@@ -168,10 +200,14 @@ class api {
     
         if ($chatState['turn'] >= 10) {
             $messages[] = ["role" => "system", "content" => "This is the end of the conversation. Thank the teacher and say goodbye politely."];
-            require_once($CFG->dirroot . '/local/geniai/lib.php'); // Adjust path if needed.
-            $userid = $USER->id;
+
+            $messages[] = ["role" => "system", "content" => "Give the teacher their final score out of 8 based on the points being tracked on the rubric 
+            throughout the conversation. Make this message seem seperate from the parent, because you're externally graded them not the parent. Do not grade
+            the parent's end of the conversation."];
+            //require_once($CFG->dirroot . '/local/geniai/lib.php'); // Adjust path if needed.
+            //$userid = $USER->id;
             //$gradeval = self::evaluate_user_grade($messages); Placeholder for your eval logic.
-            local_geniai_grade_item_update($courseid, $userid, 6);
+            //local_geniai_grade_item_update($courseid, $userid, 6);
         }
     
         if (count($messages) > 12) {
