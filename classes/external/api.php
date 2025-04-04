@@ -83,10 +83,11 @@ class api {
      * @throws \coding_exception
      * @throws \dml_exception
      */
-     public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
+    public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
         global $CFG, $DB, $USER, $SITE;
     
         $scenario = optional_param('scenario', '', PARAM_TEXT); // From dropdown or request.
+    
         if (!isset($_SESSION["chatstate-{$courseid}"])) {
             $_SESSION["chatstate-{$courseid}"] = [
                 'scenario' => '',
@@ -101,84 +102,167 @@ class api {
             $scenarios = ['anna', 'brianna', 'cathy'];
             $chatState['scenario'] = !empty($scenario) ? $scenario : $scenarios[array_rand($scenarios)];
             $chatState['turn'] = 0;
-            $_SESSION["messages-v3-{$courseid}"] = []; // reset messages.
+            $_SESSION["user_msgs-{$courseid}"] = [];    // reset user messages
+            $_SESSION["bot_msgs-{$courseid}"] = [];     // reset bot messages
         }
     
         $scenario = $chatState['scenario'];
     
-        // Set custom parent persona prompts based on scenario.
+        // Persona setup
         switch ($scenario) {
             case "anna":
-                $persona = "You are Anna Charles, the single mother of a 4-year-old girl named Sarah with autism.
-                You're overwhelmed and frustrated with the lack of communication progress. Respond using:
-                1. 'I just wanted to meet you and see if Sarah can get something else to help her talk.'
-                2. 'She spends a lot of time with my parents. They don’t know how to work the iPad.
-                She gets frustrated and then I get frustrated.'
-                3. 'I just don’t know how to help her say what she wants to say.
-                I feel like there has to be a better way.'
-                4. 'I’m doing all I can.'
-                Your tone should reflect emotional fatigue, worry, and guilt.";
+                $persona = "Your name is Anna Charles and your daughter, Sarah, is 4 years old and has a 
+                diagnosis of Autism. Sarah is just starting pre-kindergarten at a new school.
+                She received her diagnosis within the last year. She has been receiving speech therapy 
+                since 1-year of age. She currently uses a communication app on an iPad. You are a single
+                mother of Sarah. You work two jobs and Sarah spends a lot of time with her grandparents.
+                You feel guilty because you want to spend more time with Sarah, but it is difficult with 
+                your current employment. You are very overwhelmed with Sarah’s diagnosis and her lack of 
+                communication. You believe that the iPad is not working for Sarah and you don’t know how 
+                to help her.You’re frustrated and are meeting with your daughter Sarah’s teacher and want 
+                to figure out better alternatives for Sarah to communicate effectively using the iPad and
+                with her grandparents who have difficulty with technology.";
                 break;
-
             case "brianna":
-                $persona = "You are Brianna Mitchell, a married mother of Wesley (8) who has severe apraxia.
-                You’re concerned about his social isolation. Use:
-                1. 'I’m worried that Wesley has no friends and he is having trouble making friends.
-                I don’t know how to help him.'
-                2. 'He tries to communicate with his words but no one can understand him.
-                He doesn’t like carrying his device around.'
-                3. 'I’m afraid that if he doesn’t make friends now, it will just get worse as he gets older.'
-                4. 'Will he ever be able to use his speech?'
-                Your tone should be concerned, serious, and anxious.";
+                $persona = "Your name is Brianna Mitchell and your son, Wesley, in 8-years old.  
+                Wesley has severe apraxia. His speech is extremely difficult to understand.  
+                He currently uses a small handheld AAC device. 
+                Wesley has been receiving AAC services from an outpatient pediatric hospital 
+                for the past 2 years.  He also receives 30 minutes of therapy from his school-based SLP. 
+                You are the mother of Wesley.  You are married and Wesley is your only son. 
+                You emailed your son’s outpatient SLP and asked to meet.  You are frustrated because 
+                you have tried to contact the school-SLP but you haven’t received a response.
+                You are concerned that your son is socially isolated and is having difficulty
+                making friends. Recently, you attended an event at Wesley’s school.  
+                While in his classroom, you were able to observe Wesley and his classmates.  
+                You noticed that Wesley was often alone and rarely interacted with his peers.  
+                At one point, you saw him laugh at a classmate’s joke and try to communicate 
+                to his classmates with no success. You’re worried and are meeting with your son’s 
+                teacher and want to figure out how Wesley could be more social in making friends,
+                how to encourage him to use his device without being embarrassed, 
+                and if he will ever be able to use his speech.
+                ";
                 break;
-
             case "cathy":
-                $persona = "You are Cathy Fratner, a newly married mother of Charlie (2) with Down Syndrome.
-                He is not yet talking. Use:
-                1. 'I’m worried that Charlie isn’t talking yet.'
-                2. 'My husband thinks that if we keep using the iPad, Charlie won’t even bother learning to talk.'
-                3. 'I just don’t know how to help when he wants something and can’t tell me what it is.'
-                4. 'Some days he likes using the iPad, and other days not so much.'
-                Your tone should show confusion, worry, and parental doubt.";
+                $persona = "Your name is Cathy Fratner and your son, Charlie, is a 2-year old boy with 
+                Down Syndrome. Charlie is not yet talking.  He has an iPad with a communication 
+                app that his SLP recommended for him to use about 6 months ago. Charlie has 
+                been receiving speech and language services through early intervention.  
+                Once a week, his SLP goes to his daycare to provide therapy.  You are the mother 
+                of Charlie.  You are newly married and Charlie is your first child.  You met with 
+                Charlie’s SLP about 6 months ago.  She spent 2 hours with you and your husband.  
+                She introduced a communication app to you and showed you how to work the app.  
+                It seemed to make sense when the SLP used it with Charlie, but you always feel 
+                lost and frustrated when using the app. Your husband doesn’t think that Charlie 
+                should be using his iPad to communicate and that he will talk when he is ready. 
+                Now you are worried that Charlie won’t learn how to talk if he keeps using the app 
+                in therapy and at home. You’re worried and are meeting with your son’s teacher 
+                and want to figure out how Charlie could be use the iPad more regularly, if using 
+                the iPad consistently will prevent him in the future, and if you should be 
+                concerned that Charlie isn’t talking yet.";
                 break;
-
             default:
                 $persona = get_config("local_geniai", "prompt");
         }
     
-        // Load or initialize messages.
-        $messages = $_SESSION["messages-v3-{$courseid}"] ?? [];
+        // Load or initialize message arrays
+        $userMessages = $_SESSION["user_msgs-{$courseid}"] ?? [];
+        $botMessages = $_SESSION["bot_msgs-{$courseid}"] ?? [];
     
-        if (empty($messages)) {
-            $messages[] = [
-                "role" => "system",
-                "content" => $persona . "\nOnly respond as the parent. Speak naturally and stay in character.",
+        $rubric = [
+            "greeting" => "1 point if teacher starts with a greeting.",
+            "empathy" => "1 points for a statement of empathy.",
+            "note_permission" => "1 points if teacher asks to take notes.",
+            "presenting_problem" => "1 point for asking 'what brings you in today?'.",
+            "duration" => "1 point for asking 'how long has this been a problem?'.",
+            "exception" => "1 point for asking 'was this ever not a problem?'.",
+            "consultation" => "1 point for asking 'have you spoken to anyone else?'.",
+            "wrap_up" => "1 points for asking 'anything else to add?'."
+        ];
+    
+        $userMessages = $_SESSION["user_msgs-{$courseid}"] ?? [];
+        $botMessages = $_SESSION["bot_msgs-{$courseid}"] ?? [];
+    
+        // Create full message history (interleaved)
+        $fullContext = [[
+            "role" => "system",
+            "content" => $persona . "\nOnly respond as the parent. Stay in character. Use at most 4 sentences."
+        ]];
+    
+        $totalTurns = count($userMessages);
+        for ($i = 0; $i < $totalTurns; $i++) {
+            $fullContext[] = ["role" => "user", "content" => $userMessages[$i]];
+            if (isset($botMessages[$i])) {
+                $fullContext[] = ["role" => "system", "content" => $botMessages[$i]];
+            }
+        }
+    
+        $cleanedMessage = strip_tags(trim($message));
+        $moderationPrompt = [
+            ["role" => "system", "content" => "You're a moderation AI. Decide if the following message contains profanity, foul language, insults, or inappropriate content. Reply with only 'yes' or 'no'."],
+            ["role" => "user", "content" => $cleanedMessage]
+        ];
+        
+        $check = self::chat_completions($moderationPrompt);
+        $decision = strtolower(trim($check["choices"][0]["message"]["content"] ?? "no"));
+        
+        if ($decision === "yes") {
+            $_SESSION["user_msgs-{$courseid}"] = [];
+            $_SESSION["bot_msgs-{$courseid}"] = [];
+            $chatState['turn'] = 0;
+            $chatState['scenario'] = '';
+        
+            return [
+                "result" => true,
+                "format" => "html",
+                "content" => "<strong>Grade - 0 out of 10</strong><br>Your message contains inappropriate language. This session is terminated."
             ];
         }
+        
+        $userMessages[] = $cleanedMessage;
+        $fullContext[] = ["role" => "user", "content" => $cleanedMessage];
     
         $chatState['turn']++;
     
-        // User input.
-        $messages[] = ["role" => "user", "content" => strip_tags(trim($message))];
-    
-        // Handle wrap-up after 8th turn.
-        if ($chatState['turn'] === 9) {
-            $messages[] = ["role" => "system", "content" => "Try to begin wrapping up the conversation. Respond with appreciation or ask if there's anything else before ending."];
+        // Final turn (include rubric evaluation instruction)
+        if ($chatState['turn'] === 10) {
+            $teacherMessages = $_SESSION["user_msgs-{$courseid}"] ?? [];
+        
+            $formattedRubric = implode("\n", array_map(
+                fn($k, $v) => ucfirst(str_replace("_", " ", $k)) . ": " . $v,
+                array_keys($rubric),
+                $rubric
+            ));
+        
+            // Clear any previous context: overwrite $fullContext completely
+            $fullContext = [
+                [
+                    "role" => "system",
+                    "content" =>
+                        "You are evaluating a simulated parent-teacher conversation.\n" .
+                        "Below are only the teacher's replies (from role: `user`).\n" .
+                        "DO NOT consider any system/parent messages in your evaluation.\n\n" .
+                        "Rubric:\n" . $formattedRubric . "\n\n" .
+                        "Scoring Instructions:\n" .
+                        "- Start from 10 points.\n" .
+                        "- Deduct 1 point for each missing rubric item.\n" .
+                        "- Deduct 1 point if a reply is vague, irrelevant, or ignores the system's last message.\n" .
+                        "- Do not go below 0.\n" .
+                        "- Output final result like: Grade - X out of 10\n" .
+                        "- Then thank the teacher and end politely."
+                ]
+            ];
+        
+            // Add only teacher (user) messages for GPT to evaluate
+            foreach ($teacherMessages as $i => $msg) {
+                $fullContext[] = [
+                    "role" => "user",
+                    "content" => "Turn " . ($i + 1) . ": " . $msg
+                ];
+            }
         }
     
-        if ($chatState['turn'] >= 10) {
-            $messages[] = ["role" => "system", "content" => "This is the end of the conversation. Thank the teacher and say goodbye politely."];
-            require_once($CFG->dirroot . '/local/geniai/lib.php'); // Adjust path if needed.
-            $userid = $USER->id;
-            //$gradeval = self::evaluate_user_grade($messages); Placeholder for your eval logic.
-            local_geniai_grade_item_update($courseid, $userid, 6);
-        }
-    
-        if (count($messages) > 12) {
-            array_splice($messages, 3, 2); // Trim extra messages to stay under token limits.
-        }
-    
-        $gpt = self::chat_completions($messages);
+        $gpt = self::chat_completions($fullContext);
     
         if (isset($gpt["error"])) {
             $parsemarkdown = new parse_markdown();
@@ -187,17 +271,22 @@ class api {
         }
     
         if (isset($gpt["choices"][0]["message"]["content"])) {
-            $content = $gpt["choices"][0]["message"]["content"];
+            $response = $gpt["choices"][0]["message"]["content"];
             $parsemarkdown = new parse_markdown();
-            $content = $parsemarkdown->markdown_text($content);
+            $content = $parsemarkdown->markdown_text($response);
     
-            $messages[] = ["role" => "system", "content" => $content];
-            $_SESSION["messages-v3-{$courseid}"] = $messages;
+            $botMessages[] = $response;
     
-            // After turn 10, mark chat as complete.
+            // Update sessions
+            $_SESSION["user_msgs-{$courseid}"] = $userMessages;
+            $_SESSION["bot_msgs-{$courseid}"] = $botMessages;
+    
+            // Reset after final turn
             if ($chatState['turn'] >= 10) {
                 $chatState['turn'] = 0;
-                $chatState['scenario'] = ''; // Reset to allow new persona next time.
+                $chatState['scenario'] = '';
+                $_SESSION["user_msgs-{$courseid}"] = [];
+                $_SESSION["bot_msgs-{$courseid}"] = [];
             }
     
             return ["result" => true, "format" => "html", "content" => $content];
@@ -205,97 +294,6 @@ class api {
     
         return ["result" => false, "format" => "text", "content" => "Error..."];
     }
-
-
-
-    
-    /***
-    public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
-        global $CFG, $DB, $USER, $SITE;
-
-        $scenario = optional_param('scenario', '', PARAM_TEXT); // Get selected scenario from frontend.
-        if (empty($scenario)) {
-            $scenarios = ['anna', 'brianna', 'cathy'];
-            $scenario = $scenarios[array_rand($scenarios)]; // Randomly select one.
-        }
-
-        if (isset($_SESSION["messages-v3-{$courseid}"][0]) || $lastscenario !== $scenario) {
-            $messages = [];
-
-            // Set custom parent persona prompts based on scenario.
-            switch ($scenario) {
-                case "anna":
-                    $persona = "You are Anna Charles, the single mother of a 4-year-old girl named Sarah with autism.
-                    You're overwhelmed and frustrated with the lack of communication progress. Respond using:
-                    1. 'I just wanted to meet you and see if Sarah can get something else to help her talk.'
-                    2. 'She spends a lot of time with my parents. They don’t know how to work the iPad.
-                    She gets frustrated and then I get frustrated.'
-                    3. 'I just don’t know how to help her say what she wants to say.
-                    I feel like there has to be a better way.'
-                    4. 'I’m doing all I can.'
-                    Your tone should reflect emotional fatigue, worry, and guilt.";
-                    break;
-
-                case "brianna":
-                    $persona = "You are Brianna Mitchell, a married mother of Wesley (8) who has severe apraxia.
-                    You’re concerned about his social isolation. Use:
-                    1. 'I’m worried that Wesley has no friends and he is having trouble making friends.
-                    I don’t know how to help him.'
-                    2. 'He tries to communicate with his words but no one can understand him.
-                    He doesn’t like carrying his device around.'
-                    3. 'I’m afraid that if he doesn’t make friends now, it will just get worse as he gets older.'
-                    4. 'Will he ever be able to use his speech?'
-                    Your tone should be concerned, serious, and anxious.";
-                    break;
-
-                case "cathy":
-                    $persona = "You are Cathy Fratner, a newly married mother of Charlie (2) with Down Syndrome.
-                    He is not yet talking. Use:
-                    1. 'I’m worried that Charlie isn’t talking yet.'
-                    2. 'My husband thinks that if we keep using the iPad, Charlie won’t even bother learning to talk.'
-                    3. 'I just don’t know how to help when he wants something and can’t tell me what it is.'
-                    4. 'Some days he likes using the iPad, and other days not so much.'
-                    Your tone should show confusion, worry, and parental doubt.";
-                    break;
-
-                default:
-                    $persona = get_config("local_geniai", "prompt");
-            }
-
-            $messages[] = [
-                "role" => "system",
-                "content" => $persona . "\nOnly respond as the parent. Speak naturally and stay in character.",
-            ];
-        }
-
-        $messages[] = ["role" => "user", "content" => strip_tags(trim($message))];
-
-        if (count($messages) > 10) {
-            unset($messages[4]);
-            unset($messages[3]);
-            $messages = array_values($messages);
-        }
-
-        $gpt = self::chat_completions($messages);
-        if (isset($gpt["error"])) {
-            $parsemarkdown = new parse_markdown();
-            $content = $parsemarkdown->markdown_text($gpt["error"]["message"]);
-            return ["result" => false, "format" => "text", "content" => $content];
-        }
-
-        if (isset($gpt["choices"][0]["message"]["content"])) {
-            $content = $gpt["choices"][0]["message"]["content"];
-            $parsemarkdown = new parse_markdown();
-            $content = $parsemarkdown->markdown_text($content);
-
-            $messages[] = ["role" => "system", "content" => $content];
-            $_SESSION["messages-v3-{$courseid}"] = $messages;
-
-            return ["result" => true, "format" => "html", "content" => $content];
-        }
-
-        return ["result" => false, "format" => "text", "content" => "Error..."];
-    }*/
 
     /**
      * Chat completions function.

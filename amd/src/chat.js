@@ -94,17 +94,7 @@ define(["jquery", "core/ajax", "core/notification"], function($, ajax, notificat
                     if (release >= 4.2) {
                         methodname = "local_geniai_chat_4";
                     }
-                    var selectedScenario = $("#geniai-scenario").val();
-                    ajax.call([{
-                        methodname: methodname,
-                        args: {
-                            message: messagesend,
-                            audio: chat.mediaRecordUrl,
-                            courseid: courseid,
-                            lang: chat.lang,
-                            scenario: selectedScenario
-                        }
-                    }])[0].done(function(data) {
+                    [0].done(function(data) {
 
                         if (data.result) {
                             $(`#${geniaiServerId}`).html(data.content);

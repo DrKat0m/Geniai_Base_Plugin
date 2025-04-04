@@ -50,11 +50,11 @@ function local_geniai_before_footer() {
  */
 function local_geniai_grade_item_update($courseid, $userid, $gradeval) {
     $item = array(
-        'itemname' => 'Active Listening Evaluation',
+        'itemname' => 'Active Listening',
         'itemtype' => 'manual',
         'gradetype' => GRADE_TYPE_VALUE,
-        'grademax' => 10,
-        'grademin' => 0,
+        'grademax' => 100,
+        'grademin' => 10,
         'courseid' => $courseid,
     );
 
