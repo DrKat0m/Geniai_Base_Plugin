@@ -3,6 +3,7 @@ from tkinter import messagebox, simpledialog, ttk
 import json
 import os
 
+#File
 FILENAME = "./classes/external/personas.json"
 
 # Load existing personas
