@@ -1,5 +1,5 @@
 /* RemixDesign | woaichidapi@163.com | Redesigned by JimmyCheung */
-
+/*
 .audioplayer {
     display: flex;
     flex-direction: row;
@@ -224,11 +224,14 @@
         background-color: #0059ff;
     }
     
-    /* responsive | you can change the max-width value to match your theme */
     
     @media screen and (max-width: 679px) {
         &-volume-adjust {
             display: none;
         }
     }
+}
+*/
+.audioplayer {
+    display: none;
 }

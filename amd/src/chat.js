@@ -79,11 +79,12 @@ define(["jquery", "core/ajax", "core/notification"], function($, ajax, notificat
                                 </svg>
                             </div>`);
                     if (chat.mediaRecordUrl) {
-                        $(`#${geniaiServerId}-send`).html(`
+                       /* $(`#${geniaiServerId}-send`).html(`
                             <audio controls autoplay src="${chat.mediaRecordUrl}" 
                                    id="${geniaiServerId}-audio"></audio>
-                            <div id="${geniaiServerId}-transcription" class="transcription"></div>`);
-
+                            <div id="${geniaiServerId}-transcription" class="transcription"></div>`);*/
+                        $(`#${geniaiServerId}-send`).html(`
+                            div id="${geniaiServerId}-transcription" class="transcription"></div>`);
                         $(`#${geniaiServerId}-audio`).audioPlayer();
                     } else {
                         $(`#${geniaiServerId}-send`).html(messagesend);
@@ -94,16 +95,22 @@ define(["jquery", "core/ajax", "core/notification"], function($, ajax, notificat
                     if (release >= 4.2) {
                         methodname = "local_geniai_chat_4";
                     }
-                    [0].done(function(data) {
 
+                    ajax.call([{
+                        methodname : methodname,
+                        args       : {
+                            message  : messagesend,
+                            audio    : chat.mediaRecordUrl,
+                            courseid : courseid,
+                            lang     : chat.lang,
+                        }
+                    }])[0].done(function(data) {
                         if (data.result) {
                             $(`#${geniaiServerId}`).html(data.content);
-
                             if (data.transcription) {
                                 $(`#${geniaiServerId}-transcription`).html(data.transcription);
                             }
-
-                            $(`#${geniaiServerId} audio`).audioPlayer();
+                        $(`#${geniaiServerId}-audio`).audioPlayer();
                         } else {
                             console.log(data);
                             if (data.message) {
@@ -306,7 +313,6 @@ define(["jquery", "core/ajax", "core/notification"], function($, ajax, notificat
         },
 
         load_audioplayer: function() {
-            /* AUTHOR: Osvaldas Valutis, www.osvaldas.info */
             var isTouch       = "ontouchstart" in window,
                 eStart        = isTouch ? "touchstart" : "mousedown",
                 eMove         = isTouch ? "touchmove" : "mousemove",

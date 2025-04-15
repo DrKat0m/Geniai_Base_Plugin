@@ -15,7 +15,6 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace local_geniai\external;
-
 use local_geniai\local\markdown\parse_markdown;
 
 /**
@@ -36,7 +35,17 @@ class api {
      */
     public static function history_api($courseid, $action) {
         if ($action == "clear") {
+            // Clear message history
             $_SESSION["messages-v3-{$courseid}"] = [];
+            $_SESSION["user_msgs-{$courseid}"] = [];
+            $_SESSION["bot_msgs-{$courseid}"] = [];
+            $currentScenario = $_SESSION["chatstate-{$courseid}"]["scenario"] ?? '';
+            // Reset chat state
+            $_SESSION["chatstate-{$courseid}"] = [
+                'scenario' => $currentScenario,
+                'turn' => 0
+            ];
+    
             return [
                 "result" => true,
                 "content" => "[]",
@@ -85,16 +94,32 @@ class api {
      */
     public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
         global $CFG, $DB, $USER, $SITE;
-    
-        $scenario = optional_param('scenario', '', PARAM_TEXT); // From dropdown or request.
-    
+        
+        $maxMessageLength = 2500;
+        if (strlen($message) > $maxMessageLength) {
+            return ["result" => false, "format" => "text", "content" => "Error... Message too long. Please limit to {$maxMessageLength} characters.", ];
+        }
+        $maxAudioSizeBytes = 1000*1024; //1MB
+        if ($audio) {
+            $audio = str_replace("data:audio/mp3;base64,", "", $audio);
+            $audiodata = base64_decode($audio);
+            if (strlen($audiodata) > $maxAudioSizeBytes) {
+                return [
+                    "result" => false,
+                    "format" => "text",
+                    "content" => "Error... Audio file is too large. Please upload audio under 1 KB."
+                ];
+            }
+        }
+
         if (!isset($_SESSION["chatstate-{$courseid}"])) {
             $_SESSION["chatstate-{$courseid}"] = [
                 'scenario' => '',
                 'turn' => 0
             ];
         }
-    
+
+
         $chatState = &$_SESSION["chatstate-{$courseid}"];
     
         // Choose new persona if none selected or after 10 turns.
@@ -126,8 +151,7 @@ class api {
             case "brianna":
                 $persona = "Your name is Brianna Mitchell and your son, Wesley, in 8-years old.  
                 Wesley has severe apraxia. His speech is extremely difficult to understand.  
-                He currently uses a small handheld AAC device. 
-                Wesley has been receiving AAC services from an outpatient pediatric hospital 
+                He currently uses a small handheld AAC device. Wesley has been receiving AAC services from an outpatient pediatric hospital 
                 for the past 2 years.  He also receives 30 minutes of therapy from his school-based SLP. 
                 You are the mother of Wesley.  You are married and Wesley is your only son. 
                 You emailed your son’s outpatient SLP and asked to meet.  You are frustrated because 
@@ -186,9 +210,10 @@ class api {
         // Create full message history (interleaved)
         $fullContext = [[
             "role" => "system",
-            "content" => $persona . "\nOnly respond as the parent. Stay in character. Use at most 4 sentences."
+            "content" => $persona . "\nOnly respond as the parent. Behave as a parent who is visiting their child's teacher for a corncern.
+            Stay in character. Use at most 4 sentences."
         ]];
-    
+            
         $totalTurns = count($userMessages);
         for ($i = 0; $i < $totalTurns; $i++) {
             $fullContext[] = ["role" => "user", "content" => $userMessages[$i]];
@@ -196,10 +221,32 @@ class api {
                 $fullContext[] = ["role" => "system", "content" => $botMessages[$i]];
             }
         }
-    
+
+        $transcription = null;
+        if ($audio) {
+            $transcription = self::transcriptions($audio, $lang);
+            $message = $transcription["text"];
+        }
+
         $cleanedMessage = strip_tags(trim($message));
+        // Handle special persona-setting command
+        if (preg_match('/^\$\$persona=(anna|brianna|cathy)\$\$$/', $cleanedMessage, $matches)) {
+            $_SESSION["chatstate-{$courseid}"] = [
+                'scenario' => $matches[1],
+                'turn' => 0
+            ];
+            $_SESSION["user_msgs-{$courseid}"] = [];
+            $_SESSION["bot_msgs-{$courseid}"] = [];
+
+            return [
+                "result" => true,
+                "format" => "text",
+                "content" => "You are talking to <strong>" . ucfirst(strtolower($matches[1])) . "</strong>."
+            ];
+        }
+
         $moderationPrompt = [
-            ["role" => "system", "content" => "You're a moderation AI. Decide if the following message contains profanity, foul language, insults, or inappropriate content. Reply with only 'yes' or 'no'."],
+            ["role" => "system", "content" => "You're a moderation AI. Decide if the following message contains profanity, foul language, mild insults words like dumb, etc. , or inappropriate content. Reply with only 'yes' or 'no'."],
             ["role" => "user", "content" => $cleanedMessage]
         ];
         
@@ -218,7 +265,7 @@ class api {
                 "content" => "<strong>Grade - 0 out of 10</strong><br>Your message contains inappropriate language. This session is terminated."
             ];
         }
-        
+
         $userMessages[] = $cleanedMessage;
         $fullContext[] = ["role" => "user", "content" => $cleanedMessage];
     
@@ -249,10 +296,14 @@ class api {
                         "- Deduct 1 point if a reply is vague, irrelevant, or ignores the system's last message.\n" .
                         "- Do not go below 0.\n" .
                         "- Output final result like: Grade - X out of 10\n" .
-                        "- Then thank the teacher and end politely."
+                        " Also give the whole analysis (with heading some feedback points) of the points earned as per the rubric in bullets as to where points were earned and where were they deducted".
+                        " For this use the format earned X for Y where X is points and Y is the rubric description".
+                        " Deducted X for Y where X is points and Y is the reason for deduction".
+                        " Make the grading feedback proper and make sure it accounts for all 10 points and adds upto it. Also, emojify every feedback bullets to make it look good".
+                        "- Then thank the teacher and end politely. Ask to clear chat if they want to do this activity again"
                 ]
             ];
-        
+
             // Add only teacher (user) messages for GPT to evaluate
             foreach ($teacherMessages as $i => $msg) {
                 $fullContext[] = [
@@ -267,7 +318,7 @@ class api {
         if (isset($gpt["error"])) {
             $parsemarkdown = new parse_markdown();
             $content = $parsemarkdown->markdown_text($gpt["error"]["message"]);
-            return ["result" => false, "format" => "text", "content" => $content];
+            return ["result" => false, "format" => "text", "content" => $content, "transcription" => $transcription["text"],];
         }
     
         if (isset($gpt["choices"][0]["message"]["content"])) {
@@ -288,11 +339,12 @@ class api {
                 $_SESSION["user_msgs-{$courseid}"] = [];
                 $_SESSION["bot_msgs-{$courseid}"] = [];
             }
-    
-            return ["result" => true, "format" => "html", "content" => $content];
+            
+
+            return ["result" => true, "format" => "html", "content" => $content, "transcription" => $transcription["text"],];
         }
     
-        return ["result" => false, "format" => "text", "content" => "Error..."];
+        return ["result" => false, "format" => "text", "content" => "Error...", ];
     }
 
     /**

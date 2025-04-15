@@ -25,7 +25,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/../../config.php'); // Ensure $CFG is defined
-require_once($CFG->libdir . '/gradelib.php'); // Now $CFG->libdir works
 
 use local_geniai\core_hook_output;
 
@@ -38,28 +37,4 @@ use local_geniai\core_hook_output;
  */
 function local_geniai_before_footer() {
     core_hook_output::before_footer_html_generation();
-}
-
-/**
- * Creates or updates a grade item and assigns a grade to a user.
- *
- * @param int $courseid Course ID
- * @param int $userid User ID
- * @param float $gradeval Grade value (0 to 10)
- * @return void
- */
-function local_geniai_grade_item_update($courseid, $userid, $gradeval) {
-    $item = array(
-        'itemname' => 'Active Listening',
-        'itemtype' => 'manual',
-        'gradetype' => GRADE_TYPE_VALUE,
-        'grademax' => 100,
-        'grademin' => 10,
-        'courseid' => $courseid,
-    );
-
-    grade_update('local_geniai', $courseid, 'user', 'local_geniai', $userid, 0, null, $item);
-
-    $grades = array($userid => $gradeval);
-    grade_update('local_geniai', $courseid, 'user', 'local_geniai', $userid, 0, $grades);
 }
