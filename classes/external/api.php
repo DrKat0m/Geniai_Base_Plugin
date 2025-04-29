@@ -20,8 +20,10 @@ use local_geniai\local\markdown\parse_markdown;
 /**
  * Global api file.
  *
+ * Provides two main endpoints: history_api() for retrieving or clearing chat history,
+ * and chat_api() for processing user messages, managing scenarios, evaluating feedback, and returning bot replies.
+ *
  * @package     local_geniai
- * @copyright   2024 Eduardo Kraus https://eduardokraus.com/
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class api {
@@ -32,6 +34,9 @@ class api {
      * @param string $action
      *
      * @return array
+     */
+    /**
+     * Clears or retrieves the chat message history.
      */
     public static function history_api($courseid, $action) {
         if ($action == "clear") {
@@ -92,14 +97,38 @@ class api {
      * @throws \coding_exception
      * @throws \dml_exception
      */
+
+    /**
+     * Main API function for handling chat messages.
+     *
+     * - Handles text and audio input
+     * - Tracks conversation state (scenario, turn)
+     * - Supports switching scenarios
+     * - Injects a rubric and triggers grading at the final turn
+     * - Returns AI response with markdown parsing
+     *
+     * How to add a new scenario:
+     * ----------------------------------------
+     * Add another case under `switch ($scenario)` with the following format:
+     *   case "newscenario":
+     *       $persona = "Describe the parent's background, concern, and goals...";
+     *       break;
+     *
+     * How to change max number of turns (default = 10):
+     * ----------------------------------------
+     * 1. Search for: `$chatState['turn'] >= 10` and `$chatState['turn'] === 10`
+     * 2. Replace `10` with your desired max turns
+     * 3. Make sure both conditionals are changed
+     */
+
     public static function chat_api($message, $courseid, $audio = null, $lang = "en") {
         global $CFG, $DB, $USER, $SITE;
         
-        $maxMessageLength = 2500;
+        $maxMessageLength = 2500; //Max text length (change this to increase or decrease the input response form the user)
         if (strlen($message) > $maxMessageLength) {
             return ["result" => false, "format" => "text", "content" => "Error... Message too long. Please limit to {$maxMessageLength} characters.", ];
         }
-        $maxAudioSizeBytes = 1000*1024; //1MB
+        $maxAudioSizeBytes = 1000*1024; //1MB - Max audio size (change this to increase or decrease the input response form the user)
         if ($audio) {
             $audio = str_replace("data:audio/mp3;base64,", "", $audio);
             $audiodata = base64_decode($audio);
@@ -185,6 +214,25 @@ class api {
                 the iPad consistently will prevent him in the future, and if you should be 
                 concerned that Charlie isn’t talking yet.";
                 break;
+            /*
+            case "parent_firstname" (Have this same as the value you wrote in the frontend file):
+                $persona = "Your name is Cathy Fratner and your son, Charlie, is a 2-year old boy with 
+                Down Syndrome. Charlie is not yet talking.  He has an iPad with a communication 
+                app that his SLP recommended for him to use about 6 months ago. Charlie has 
+                been receiving speech and language services through early intervention.  
+                Once a week, his SLP goes to his daycare to provide therapy.  You are the mother 
+                of Charlie.  You are newly married and Charlie is your first child.  You met with 
+                Charlie’s SLP about 6 months ago.  She spent 2 hours with you and your husband.  
+                She introduced a communication app to you and showed you how to work the app.  
+                It seemed to make sense when the SLP used it with Charlie, but you always feel 
+                lost and frustrated when using the app. Your husband doesn’t think that Charlie 
+                should be using his iPad to communicate and that he will talk when he is ready. 
+                Now you are worried that Charlie won’t learn how to talk if he keeps using the app 
+                in therapy and at home. You’re worried and are meeting with your son’s teacher 
+                and want to figure out how Charlie could be use the iPad more regularly, if using 
+                the iPad consistently will prevent him in the future, and if you should be 
+                concerned that Charlie isn’t talking yet."; (Update the text with a similar explaining style scenario prompt)
+                break;*/
             default:
                 $persona = get_config("local_geniai", "prompt");
         }
@@ -192,7 +240,8 @@ class api {
         // Load or initialize message arrays
         $userMessages = $_SESSION["user_msgs-{$courseid}"] ?? [];
         $botMessages = $_SESSION["bot_msgs-{$courseid}"] ?? [];
-    
+
+        //Change or add the rubric here if required, use a similar syntax style for accurate results
         $rubric = [
             "greeting" => "1 point if teacher starts with a greeting.",
             "empathy" => "1 points for a statement of empathy.",
@@ -230,7 +279,7 @@ class api {
 
         $cleanedMessage = strip_tags(trim($message));
         // Handle special persona-setting command
-        if (preg_match('/^\$\$persona=(anna|brianna|cathy)\$\$$/', $cleanedMessage, $matches)) {
+        if (preg_match('/^\$\$persona=(anna|brianna|cathy)\$\$$/', $cleanedMessage, $matches)) { //also add the new scenario value here
             $_SESSION["chatstate-{$courseid}"] = [
                 'scenario' => $matches[1],
                 'turn' => 0
@@ -252,7 +301,9 @@ class api {
         
         $check = self::chat_completions($moderationPrompt);
         $decision = strtolower(trim($check["choices"][0]["message"]["content"] ?? "no"));
-        
+
+        //Foul language Detector
+
         if ($decision === "yes") {
             $_SESSION["user_msgs-{$courseid}"] = [];
             $_SESSION["bot_msgs-{$courseid}"] = [];
@@ -272,7 +323,7 @@ class api {
         $chatState['turn']++;
     
         // Final turn (include rubric evaluation instruction)
-        if ($chatState['turn'] === 10) {
+        if ($chatState['turn'] === 10) { //change the final number of turns here
             $teacherMessages = $_SESSION["user_msgs-{$courseid}"] ?? [];
         
             $formattedRubric = implode("\n", array_map(
@@ -282,25 +333,43 @@ class api {
             ));
         
             // Clear any previous context: overwrite $fullContext completely
+            //Don't change the formatting here to changing the rubric, instead search for variable $rubric to change the rubric
             $fullContext = [
                 [
                     "role" => "system",
                     "content" =>
-                        "You are evaluating a simulated parent-teacher conversation.\n" .
+                        "You are evaluating a simulated parent-teacher conversation.\n\n" .
                         "Below are only the teacher's replies (from role: `user`).\n" .
-                        "DO NOT consider any system/parent messages in your evaluation.\n\n" .
+                        "Do NOT evaluate any system or parent messages — ONLY evaluate the teacher replies.\n\n" .
                         "Rubric:\n" . $formattedRubric . "\n\n" .
-                        "Scoring Instructions:\n" .
+
+                        "Feedback Format:\n" .
+                        "🎯 Your goal is to group feedback into the 4 steps of LAFF:\n" .
+                        "1. **Listen, empathize, and communicate respect**\n" .
+                        "2. **Ask questions and ask permission to take notes**\n" .
+                        "3. **Focus on the issue**\n" .
+                        "4. **Find a first step**\n\n" .
+
+                        "🧮 Scoring:\n" .
                         "- Start from 10 points.\n" .
-                        "- Deduct 1 point for each missing rubric item.\n" .
-                        "- Deduct 1 point if a reply is vague, irrelevant, or ignores the system's last message.\n" .
-                        "- Do not go below 0.\n" .
-                        "- Output final result like: Grade - X out of 10\n" .
-                        " Also give the whole analysis (with heading some feedback points) of the points earned as per the rubric in bullets as to where points were earned and where were they deducted".
-                        " For this use the format earned X for Y where X is points and Y is the rubric description".
-                        " Deducted X for Y where X is points and Y is the reason for deduction".
-                        " Make the grading feedback proper and make sure it accounts for all 10 points and adds upto it. Also, emojify every feedback bullets to make it look good".
-                        "- Then thank the teacher and end politely. Ask to clear chat if they want to do this activity again"
+                        "- Award 1 point for each clearly demonstrated rubric-aligned move.\n" .
+                        "- Do **not** show point deductions.\n" .
+                        "- Instead, if something was missed, write it as a Missed opportunity: .\n" .
+                        "- Mention the turn number (teacher turn) in parentheses, using this rule:\n" .
+
+                        "📝 Output Format:\n" .
+                        "Start with - Grade - X out of 10 in bold. \n".
+                        "For each LAFF step, use a heading (bold, clear name of the step).\n" .
+                        "Under each, list the bullets:\n" .
+                        "- Earned ✅ 1 pt for ___ (turn #)\n" .
+                        "- Missed opportunity: 💡 ___\n\n" .
+
+                        "🧑‍🏫 End with:\n" .
+                        "- Total score: X out of 10\n" .
+                        "- A warm thank-you message\n" .
+                        "- Suggest to click **Clear Chat** button to restart if needed\n\n" .
+
+                        "Make the tone of the entire feedback response emoji-filled, kind and supportive."
                 ]
             ];
 
@@ -308,7 +377,7 @@ class api {
             foreach ($teacherMessages as $i => $msg) {
                 $fullContext[] = [
                     "role" => "user",
-                    "content" => "Turn " . ($i + 1) . ": " . $msg
+                    "content" => "Turn " . (($i + 1) * 2 - 1) . ": " . $msg
                 ];
             }
         }
@@ -333,7 +402,7 @@ class api {
             $_SESSION["bot_msgs-{$courseid}"] = $botMessages;
     
             // Reset after final turn
-            if ($chatState['turn'] >= 10) {
+            if ($chatState['turn'] >= 10) { //change the final number of turns here
                 $chatState['turn'] = 0;
                 $chatState['scenario'] = '';
                 $_SESSION["user_msgs-{$courseid}"] = [];
@@ -357,6 +426,14 @@ class api {
      *
      * @throws \dml_exception
      */
+
+        /**
+     * Sends a message array to OpenAI's chat completions endpoint
+     *
+     * Adjusts parameters like temperature, top_p, penalties, etc.
+     * Stores response in database for auditing.
+     */
+
     public static function chat_completions($messages, $ignoremaxtoken = false) {
         global $DB;
 
@@ -468,6 +545,10 @@ class api {
      * @return array
      * @throws \dml_exception
      */
+
+     /**
+     * Handles audio transcription using OpenAI's Whisper API
+     */
     private static function transcriptions($audio, $lang) {
         global $CFG;
 
@@ -512,6 +593,10 @@ class api {
      * @return string
      *
      * @throws \dml_exception
+     */
+
+    /**
+     * Converts text to speech using OpenAI's TTS API and returns a playable link (doesn't work in updated moodle version without additional plugins)
      */
     private static function speech($input) {
         global $CFG;

@@ -50,7 +50,6 @@ define(["jquery", "core/ajax", "core/notification"], function($, ajax, notificat
                 var text = e.clipboardData.getData("text/plain");
                 document.execCommand("insertHTML", false, text);
             });
-
             $("#geniai-icon-send").click(sendMessage);
 
             geniaisendarea.click(function() {
@@ -79,12 +78,12 @@ define(["jquery", "core/ajax", "core/notification"], function($, ajax, notificat
                                 </svg>
                             </div>`);
                     if (chat.mediaRecordUrl) {
-                       /* $(`#${geniaiServerId}-send`).html(`
+                        /*$(`#${geniaiServerId}-send`).html(`
                             <audio controls autoplay src="${chat.mediaRecordUrl}" 
                                    id="${geniaiServerId}-audio"></audio>
                             <div id="${geniaiServerId}-transcription" class="transcription"></div>`);*/
                         $(`#${geniaiServerId}-send`).html(`
-                            div id="${geniaiServerId}-transcription" class="transcription"></div>`);
+                            <div id="${geniaiServerId}-transcription" class="transcription"></div>`);
                         $(`#${geniaiServerId}-audio`).audioPlayer();
                     } else {
                         $(`#${geniaiServerId}-send`).html(messagesend);
@@ -387,7 +386,7 @@ define(["jquery", "core/ajax", "core/notification"], function($, ajax, notificat
                     theAudio = theAudio.get(0);
 
                     if (isSupport) {
-                        thePlayer.find("audio").css({
+                       thePlayer.find("audio").css({
                             "width": 0,
                             "height": 0,
                             "visibility": "hidden"

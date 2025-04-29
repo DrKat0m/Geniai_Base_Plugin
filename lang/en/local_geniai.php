@@ -82,12 +82,26 @@ $string['max_tokens_desc'] = 'Maximum number of words that can be generated in e
 $string['message_01'] = 'Hello, {$a}! 🌟';
 $string['message_02_course'] = 'Welcome to the course {$a->coursename} on Moodle {$a->moodlename}!
 
-I am {$a->geniainame}, and I am here to make your learning journey as amazing as possible.
+I am EDURA — your Engaging Dialogue Unit for Reflective Assessment — and I’m here to support you throughout your learning journey.
 
-This chatbot is designed to help you practice and demonstrate your ability to effectively communicate with parents of children who use AAC (Augmentative and Alternative Communication) tools.
+This AI-powered chatbot is designed to help you practice and demonstrate effective communication with parents of children who use AAC (Augmentative and Alternative Communication) tools. As a pre-service teacher, your task is to carry out a simulated parent-teacher conversation using the LAFF don’t CRY strategy.
 
-In this activity, you will engage in a simulated conversation as a pre-service teacher, aiming to use the LAFF don’t CRY strategy during your responses. The goal is to complete 8 back-and-forth exchanges with the "parent." After the conversation ends, your responses will be analyzed, and a score will be automatically logged into your gradebook based on how well you applied the LAFF strategy.
-🔄 If you would like to restart the assignment, simply click **Clear Chat** to begin again.';
+🗣️ You will engage in a structured, 8-turn back-and-forth dialogue with a simulated parent persona. After the final exchange, your responses will be automatically evaluated based on the LAFF framework.
+
+📊 Your score (out of 10) will be displayed and automatically recorded in the Moodle gradebook.
+
+✨ Key Features:
+- Use the dropdown to select a parent persona scenario.
+- Click Light/Dark to toggle between visual themes.
+- Use the Microphone button to speak instead of typing (if enabled).
+- Click Clear Chat to restart the conversation at any time.
+- Use the Generate PDF button to export your conversation log for your records.
+
+🎯 To pass this assignment, you must demonstrate strong application of LAFF principles — especially showing empathy, asking relevant questions, and following through with reflective teaching practice.
+
+🔄 Ready to begin or restart? Just click Clear Chat and let EDURA guide you again!
+
+Good luck, and let’s make every conversation count!';
 
 $string['message_02_geniai'] = 'Hello! I am {$a}, here to help you. If you prefer, you can send me an audio message, and I will respond in audio as well. If you prefer to write, I will reply in text. Whichever you prefer!';
 $string['message_02_home'] = 'I am {$a}, and I am here to make your learning journey as amazing as possible.
