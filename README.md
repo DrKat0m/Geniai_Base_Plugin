@@ -76,7 +76,7 @@ Open a Pull Request on GitHub for review and merging.
 
 For setting up Xdebug with PHP, refer to Kartavya’s comprehensive guide on Discord:
 
-🔗 [Xdebug Setup Guide](https://discord.com/channels/1328761463774511164/1328771210087235595/1346614587008618588)
+🔗 [Xdebug Setup Guide](<script src="https://gist.github.com/DrKat0m/3221c4a31b821920085306184c0b290c.js"></script>)
 
 ---
 
