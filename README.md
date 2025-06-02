@@ -1,98 +1,114 @@
-```markdown
 # Geniai Base Plugin (Backend)
 
-This repository contains the **core backend logic** for the AAC Moodle Chatbot.  
-All backend processing and integrations should be done and maintained here.
+This repository contains the **core backend logic** for the AAC Moodle Chatbot. All backend processing and integrations must be managed here.
 
-> ⚠️ **Do not mix up frontend/activity code with this repository.**  
-> All chatbot activity UI code should go in the [moodle-chatbot](https://github.com/jpo5417/moodle-chatbot) repo.
+> ⚠️ **Note:** Do not mix frontend or UI activity code with this repository. All UI code should reside in the [moodle-chatbot](https://github.com/jpo5417/moodle-chatbot) repository.
 
 ---
 
-## 🔧 Installing the Plugin
+## 📥 Installation Guide
 
-1. Download the ZIP of the latest version from this repository.
-2. In Moodle, go to:  
-   `Site Administration → Plugins → Install Plugins → Install plugin from the ZIP file`
-3. Upload and install the plugin.
+Follow these steps to install the plugin into your Moodle environment:
 
-This plugin should install into the `local/geniai` directory inside your Moodle codebase.
+1. **Download** the latest ZIP archive of this repository.
+2. **Navigate** to Moodle and proceed to:
+
+   ```
+   Site Administration → Plugins → Install Plugins → Install plugin from ZIP file
+   ```
+3. **Upload** the downloaded ZIP file and complete the installation.
+
+The plugin will be installed at:
+
+```
+local/geniai
+```
 
 ---
 
-## 🔄 Keeping Frontend (Activity Plugin) in Sync
+## 🔄 Frontend Synchronization
 
-- After updating backend logic here, ensure that relevant API changes or logic adjustments are reflected in the chatbot activity plugin as well.
-- **Do not push UI/activity code into this repo.**
+Ensure synchronization between backend updates and frontend UI changes:
+
+* After updating backend logic, ensure any relevant API changes or adjustments are reflected in the frontend chatbot activity plugin.
+* **Reminder:** Do not push frontend UI/activity code to this backend repository.
 
 ---
 
-## 🛠️ Development Workflow
+## 🚀 Contributing Workflow
 
-If you're planning to contribute, here's a recommended Git workflow:
+To contribute to this project, follow the structured Git workflow:
 
-### 1. Clone the repository via SSH
+### 1. Clone Repository
+
+Clone via SSH:
 
 ```bash
 git clone git@github.com:DrKat0m/Geniai_Base_Plugin.git
 cd Geniai_Base_Plugin
 ```
 
-### 2. Create a new branch
+### 2. Create Feature Branch
+
+Create and switch to your branch:
 
 ```bash
-git checkout -b your-branch-name
+git checkout -b your-feature-branch
 ```
 
-### 3. Make your changes  
-Then stage, commit, and push:
+### 3. Commit and Push Changes
+
+Make your changes, then stage, commit, and push:
 
 ```bash
 git add .
-git commit -m "Your descriptive commit message"
-git push -u origin your-branch-name
+git commit -m "Descriptive commit message"
+git push -u origin your-feature-branch
 ```
 
-### 4. Open a pull request  
-Do this on GitHub so your changes can be reviewed.
+### 4. Submit Pull Request
+
+Open a Pull Request on GitHub for review and merging.
 
 ---
 
-## 🧪 Debugging with Xdebug
+## 🐞 Debugging with Xdebug
 
-If you’re setting up Xdebug with PHP, follow the detailed step-by-step guide by Kartavya in the Discord Resource Channel:  
-🔗 [Discord Guide](https://discord.com/channels/1328761463774511164/1328771210087235595/1346614587008618588)
+For setting up Xdebug with PHP, refer to Kartavya’s comprehensive guide on Discord:
+
+🔗 [Xdebug Setup Guide](https://discord.com/channels/1328761463774511164/1328771210087235595/1346614587008618588)
 
 ---
 
-## 🧹 Clean Cloning Guide (For Fresh Setups)
+## ✨ Fresh Installation & Setup
 
-1. Make sure Git is installed:  
-   👉 [https://git-scm.com/downloads](https://git-scm.com/downloads)
+Follow these instructions for a clean setup:
 
-2. Navigate to where you want to install the plugin:
+1. **Ensure Git installation:** [Download Git](https://git-scm.com/downloads)
+
+2. **Navigate to Moodle's local plugins directory:**
+
 ```bash
 cd D:\xampp\htdocs\moodle\local
 ```
 
-3. Clone the repository:
+3. **Clone the repository:**
+
 ```bash
 git clone git@github.com:DrKat0m/Geniai_Base_Plugin.git
 ```
 
-4. Create and switch to a new branch for your work:
+4. **Create a working branch:**
+
 ```bash
 cd Geniai_Base_Plugin
-git checkout -b your-branch-name
+git checkout -b your-feature-branch
 ```
 
 ---
 
-## ✅ Important Notes
+## ✅ Important Guidelines
 
-- Always commit backend changes to this repository.
-- Keep the [moodle-chatbot](https://github.com/jpo5417/moodle-chatbot) repo updated with any dependent frontend changes.
-- Avoid pushing any chatbot activity code (block/activity module) to this repo to prevent merge conflicts and code pollution.
-
----
-```
+* Commit **only backend changes** to this repository.
+* Update dependent frontend changes in the [moodle-chatbot](https://github.com/jpo5417/moodle-chatbot) repository promptly.
+* Do not push chatbot activity module or block code to this repository to prevent codebase clutter and conflicts.
